@@ -134,9 +134,7 @@ impl Reader {
                 let mut tags = HashMap::new();
                 for (key, val) in way.tags.iter() {
                     properties.update(key.to_string(), val.to_string());
-                    if self.tags_to_read.contains(key.as_str()) {
-                        tags.insert(key.to_string(), val.to_string());
-                    }
+                    tags.insert(key.to_string(), val.to_string());
                 }
                 properties.normalize();
                 if properties.accessible() && !self.is_user_rejected(&way) {
@@ -205,7 +203,12 @@ impl Reader {
 
 // Read all the nodes and ways of the osm.pbf file
 pub fn read(filename: &str) -> Result<(Vec<Node>, Vec<Edge>), String> {
-    Reader::new().read(filename)
+    Reader::new()
+        .require("highway", "*")
+        .require("cycleway", "*")
+        .require("busway", "*")
+        .require("railway", "*")
+        .read(filename)
 }
 
 #[test]

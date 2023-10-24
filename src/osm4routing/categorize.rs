@@ -6,6 +6,7 @@ pub enum FootAccessibility {
     Forbidden,
     Allowed,
 }
+
 #[derive(Clone, Copy, Debug, Serialize, PartialEq)]
 pub enum CarAccessibility {
     Unknown,
@@ -80,22 +81,30 @@ impl EdgeProperties {
         if self.bike_backward == BikeAccessibility::Unknown {
             self.bike_backward = BikeAccessibility::Forbidden;
         }
-        if self.foot == FootAccessibility::Unknown {
-            self.foot = FootAccessibility::Forbidden;
-        }
+        // if self.foot == FootAccessibility::Unknown {
+        //     self.foot = FootAccessibility::Forbidden;
+        // }
         if self.train == TrainAccessibility::Unknown {
             self.train = TrainAccessibility::Forbidden;
         }
     }
 
     // Accessible means that at least one mean of transportation can use it in one direction
+    // but mark as not accessible if all are forbidden except FootAccessibility::Unknown
     pub fn accessible(self) -> bool {
-        self.bike_forward != BikeAccessibility::Forbidden
+        (self.bike_forward != BikeAccessibility::Forbidden
             || self.bike_backward != BikeAccessibility::Forbidden
             || self.car_forward != CarAccessibility::Forbidden
             || self.car_backward != CarAccessibility::Forbidden
             || self.foot != FootAccessibility::Forbidden
+            || self.train != TrainAccessibility::Forbidden)
+            && (self.foot != FootAccessibility::Unknown
+            || self.car_forward != CarAccessibility::Forbidden
+            || self.car_backward != CarAccessibility::Forbidden
+            || self.bike_forward != BikeAccessibility::Forbidden
+            || self.bike_backward != BikeAccessibility::Forbidden
             || self.train != TrainAccessibility::Forbidden
+        )
     }
 
     pub fn update(&mut self, key_string: String, val_string: String) {
@@ -120,12 +129,12 @@ impl EdgeProperties {
                     self.foot = FootAccessibility::Allowed;
                     self.bike_forward = BikeAccessibility::Allowed;
                 }
-                "secondary" => {
+                "secondary" | "secondary_link" => {
                     self.car_forward = CarAccessibility::Secondary;
                     self.foot = FootAccessibility::Allowed;
                     self.bike_forward = BikeAccessibility::Allowed;
                 }
-                "tertiary" => {
+                "tertiary" | "tertiary_link" => {
                     self.car_forward = CarAccessibility::Tertiary;
                     self.foot = FootAccessibility::Allowed;
                     self.bike_forward = BikeAccessibility::Allowed;
@@ -135,7 +144,7 @@ impl EdgeProperties {
                     self.foot = FootAccessibility::Allowed;
                     self.bike_forward = BikeAccessibility::Allowed;
                 }
-                "motorway" | "motorway_link" => {
+                "motorway" | "motorway_link" | "motorway_junction" => {
                     self.car_forward = CarAccessibility::Motorway;
                     self.foot = FootAccessibility::Forbidden;
                     self.bike_forward = BikeAccessibility::Forbidden;
@@ -192,6 +201,7 @@ impl EdgeProperties {
             }
             "railway" => {
                 self.train = TrainAccessibility::Allowed;
+                self.foot = FootAccessibility::Forbidden;
             }
             _ => {}
         }
