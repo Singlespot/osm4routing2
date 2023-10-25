@@ -26,10 +26,10 @@ spec:
           imagePullPolicy: Always
           resources:
             limits:
-              memory: 30Gi
+              memory: 40Gi
             requests:
               cpu: "3"
-              memory: 30Gi
+              memory: 40Gi
           env:
             - name: S3_BUCKET
               value: "tmp-spt"
