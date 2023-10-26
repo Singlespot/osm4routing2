@@ -36,6 +36,8 @@ spec:
             - name: OSM_FILE_URL
 #              value: "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
               value: "https://download.geofabrik.de/europe/france-latest.osm.pbf"
+            - name: REQUIRE_LIST
+              value: "highway=*,cycleway=*,busway=*,railway=*,sidewalk=*,footway=*,path=*,crossing=*"
           volumeMounts:
             - mountPath: /data
               name: storage

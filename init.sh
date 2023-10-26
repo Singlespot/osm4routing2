@@ -8,14 +8,19 @@ if [ ! -f "/data/latest.osm.pbf" ]; then
   echo "latest.osm.pbf file does not exist."
   #  echo "corse-latest.osm.pbf file does not exist."
   echo "Downloading $OSM_FILE_URL file..."
-  wget -S -nv -O /data/latest.osm.pbf $OSM_FILE_URL
+  wget -S -nv -O /data/latest.osm.pbf "$OSM_FILE_URL"
 else
   echo "latest.osm.pbf file exists."
 fi
 
 echo "Running osm4routing..."
 cd /data || exit
-/app/target/release/osm4routing latest.osm.pbf
+# if argument $REQUIRE_LIST is not empty, then run osm4routing with the list of required tags
+if [ -z "$REQUIRE_LIST" ]; then
+  /app/target/release/osm4routing latest.osm.pbf
+else
+  /app/target/release/osm4routing latest.osm.pbf -r "$REQUIRE_LIST"
+fi
 
 #Exporting to S3_BUCKET
 echo "Exporting to bucket $S3_BUCKET/osm4routing..."
