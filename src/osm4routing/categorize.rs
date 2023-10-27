@@ -4,6 +4,7 @@ pub trait Accessibility<T> {
     fn allow(&mut self, value: T);
     fn force_allow(&mut self, value: T);
     fn forbid(&mut self);
+    fn soft_forbid(&mut self);
 }
 
 macro_rules! add_allow_forbid {
@@ -19,6 +20,11 @@ macro_rules! add_allow_forbid {
             }
             fn forbid(&mut self) {
                 *self = <$ty>::Forbidden;
+            }
+            fn soft_forbid(&mut self) {
+                if *self == <$ty>::Unknown {
+                    *self = <$ty>::Forbidden;
+                }
             }
         })*
     }
@@ -254,7 +260,7 @@ impl EdgeProperties {
                 }
                 _ => {
                     self.train.allow(TrainAccessibility::Allowed);
-                    self.foot.forbid();
+                    self.foot.soft_forbid();
                 }
             }
             _ => {}
