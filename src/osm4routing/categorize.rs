@@ -198,7 +198,12 @@ impl EdgeProperties {
                 }
                 _ => {}
             },
-            // refactoring for all cases using allow or forbid methods
+            "motor_vehicle" => match val {
+                "no" => {
+                    self.car_forward.forbid();
+                }
+                _ => {}
+            },
             "pedestrian" | "foot" => match val {
                 "no" | "use_sidepath" => self.foot.forbid(),
                 "yes" | "designated" | "official" => self.foot.force_allow(FootAccessibility::Allowed),
