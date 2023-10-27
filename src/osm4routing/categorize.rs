@@ -2,6 +2,7 @@ use serde::Serialize;
 
 pub trait Accessibility<T> {
     fn allow(&mut self, value: T);
+    fn force_allow(&mut self, value: T);
     fn forbid(&mut self);
 }
 
@@ -12,6 +13,9 @@ macro_rules! add_allow_forbid {
                 if *self != <$ty>::Forbidden {
                     *self = value;
                 }
+            }
+            fn force_allow(&mut self, value: $ty) {
+                *self = value;
             }
             fn forbid(&mut self) {
                 *self = <$ty>::Forbidden;
@@ -37,22 +41,26 @@ pub enum FootAccessibility {
 pub enum CarAccessibility {
     Unknown,
     Forbidden,
+    // @formatter:off
     Residential, // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dresidential
     Tertiary,    // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dtertiary
     Secondary,   // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dsecondary
     Primary,     // http://wiki.http://wiki.openstreetmap.org/wiki/Tag:highway%3Dprimary
     Trunk,       // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dtrunk
     Motorway,    // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway
+    // @formatter:on
 }
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq)]
 pub enum BikeAccessibility {
     Unknown,
     Forbidden,
+    // @formatter:off
     Allowed, // can be used by a bike, but the traffic might be shared with a car
     Lane,    // narrow lane dedicated for bikes, without physical separation from other traffic
     Busway,  // bikes are allowed on the bus lane
     Track,   // physically separated for any other traffic
+    // @formatter:on
 }
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq)]
@@ -186,7 +194,9 @@ impl EdgeProperties {
             },
             // refactoring for all cases using allow or forbid methods
             "pedestrian" | "foot" => match val {
-                "no" => self.foot.forbid(),
+                "no" | "use_sidepath" => self.foot.forbid(),
+                "yes" | "designated" | "official" => self.foot.force_allow(FootAccessibility::Allowed),
+                "unknown" => self.foot.allow(FootAccessibility::Unknown),
                 _ => self.foot.allow(FootAccessibility::Allowed),
             },
             "path" => if self.foot == FootAccessibility::Unknown {
@@ -210,7 +220,9 @@ impl EdgeProperties {
             },
 
             "bicycle" => match val {
-                "no" | "false" => self.bike_forward.forbid(),
+                "no" | "false" | "use_sidepath" | "dismount" => self.bike_forward.forbid(),
+                "yes" | "official" => self.bike_forward.force_allow(BikeAccessibility::Allowed),
+                "designated" => self.bike_forward.force_allow(BikeAccessibility::Track),
                 _ => self.bike_forward.allow(BikeAccessibility::Allowed),
             },
             "busway" => match val {
@@ -236,9 +248,14 @@ impl EdgeProperties {
                     }
                 }
             }
-            "railway" => {
-                self.train.allow(TrainAccessibility::Allowed);
-                self.foot.forbid();
+            "railway" => match val {
+                "abandoned" | "disused" | "razed" => {
+                    self.train.forbid();
+                }
+                _ => {
+                    self.train.allow(TrainAccessibility::Allowed);
+                    self.foot.forbid();
+                }
             }
             _ => {}
         }
