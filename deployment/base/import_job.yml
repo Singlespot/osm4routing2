@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pgrouting-import-job
+spec:
+  template:
+    metadata:
+      labels:
+        app: pgrouting-import
+    spec:
+      serviceAccountName: pgrouting-import
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        singlespot.com/ondemand: "true"
+        singlespot.com/temporary: "true"
+      tolerations:
+        - key: singlespot.com/ondemand
+          operator: Exists
+          effect: NoSchedule
+        - key: singlespot.com/temporary
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: pgrouting-import
+          image: 268324876595.dkr.ecr.eu-west-1.amazonaws.com/pgrouting-import:{VERSION.txt}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: 40Gi
+            requests:
+              cpu: "3"
+              memory: 40Gi
+          env:
+            - name: S3_BUCKET
+              value: "tmp-spt"
+            - name: OSM_FILE_URL
+              #              value: "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
+              value: "https://download.geofabrik.de/europe/france-latest.osm.pbf"
+            - name: REQUIRE_LIST
+              value: "highway=*,cycleway=*,busway=*,railway=*,sidewalk=*,footway=*,path=*,crossing=*,man_made=pier,man_made=cutline,leisure=track"
+          volumeMounts:
+            - mountPath: /data
+              name: storage
+      volumes:
+        #       Sets up a persistent 120Gi gp3 volume claim for the job (not ephemeral)
+        - name: storage
+          persistentVolumeClaim:
+            claimName: pgrouting-import-storage
+      restartPolicy: Never

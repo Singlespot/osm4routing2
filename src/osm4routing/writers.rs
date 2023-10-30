@@ -1,7 +1,10 @@
 use super::models::*;
 
 pub fn csv(nodes: Vec<Node>, edges: Vec<Edge>) {
-    let edges_path = std::path::Path::new("edges.csv");
+    let today = chrono::Local::now().format("%Y%m%d").to_string();
+    let edges_filename = format!("edges_{}.csv", today);
+    let edges_path = std::path::Path::new(&edges_filename);
+    // add today's ate to the filename
     let mut edges_csv = csv::Writer::from_path(edges_path).unwrap();
     edges_csv
         .serialize(vec![
@@ -17,6 +20,7 @@ pub fn csv(nodes: Vec<Node>, edges: Vec<Edge>) {
             "bike_backward",
             "train",
             "wkt",
+            "tags"
         ])
         .expect("CSV: unable to write edge header");
     for edge in edges {
@@ -34,11 +38,13 @@ pub fn csv(nodes: Vec<Node>, edges: Vec<Edge>) {
                 edge.properties.bike_backward,
                 edge.properties.train,
                 edge.as_wkt(),
+                // write tags as json
+                serde_json::to_string(&edge.tags).unwrap_or("".to_string()),
             ))
             .expect("CSV: unable to write edge");
     }
-
-    let nodes_path = std::path::Path::new("nodes.csv");
+    let nodes_filename = format!("nodes_{}.csv", today);
+    let nodes_path = std::path::Path::new(&nodes_filename);
     let mut nodes_csv = csv::Writer::from_path(nodes_path).unwrap();
     nodes_csv
         .serialize(vec!["id", "lon", "lat"])

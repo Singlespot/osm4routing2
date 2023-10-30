@@ -53,6 +53,13 @@ impl Reader {
         self
     }
 
+    pub fn require_multiple(mut self, values: Vec<(String, String)>) -> Self {
+        for (key, value) in values {
+            self = self.require(key.as_str(), value.as_str());
+        }
+        self
+    }
+
     pub fn read_tag(mut self, key: &str) -> Self {
         self.tags_to_read.insert(key.to_string());
         self
@@ -110,11 +117,11 @@ impl Reader {
     fn is_user_rejected(&self, way: &osmpbfreader::Way) -> bool {
         let meet_required_tags = self.required_tags.is_empty()
             || way.tags.iter().any(|(key, val)| {
-                self.required_tags
-                    .get(key.as_str())
-                    .map(|values| values.contains(val.as_str()) || values.contains("*"))
-                    == Some(true)
-            });
+            self.required_tags
+                .get(key.as_str())
+                .map(|values| values.contains(val.as_str()) || values.contains("*"))
+                == Some(true)
+        });
 
         let has_forbidden_tags = way.tags.iter().any(|(key, val)| {
             self.forbidden_tags
@@ -134,9 +141,7 @@ impl Reader {
                 let mut tags = HashMap::new();
                 for (key, val) in way.tags.iter() {
                     properties.update(key.to_string(), val.to_string());
-                    if self.tags_to_read.contains(key.as_str()) {
-                        tags.insert(key.to_string(), val.to_string());
-                    }
+                    tags.insert(key.to_string(), val.to_string());
                 }
                 properties.normalize();
                 if properties.accessible() && !self.is_user_rejected(&way) {
@@ -204,13 +209,20 @@ impl Reader {
 }
 
 // Read all the nodes and ways of the osm.pbf file
-pub fn read(filename: &str) -> Result<(Vec<Node>, Vec<Edge>), String> {
-    Reader::new().read(filename)
+// required_kv is a optional list of key/value pair that must be present in the ways
+pub fn read(filename: &str, required_kv: Option<Vec<(String, String)>>) -> Result<(Vec<Node>, Vec<Edge>), String> {
+    return if let Some(required_kv) = required_kv {
+        Reader::new()
+            .require_multiple(required_kv)
+            .read(filename)
+    } else {
+        Reader::new().read(filename)
+    }
 }
 
 #[test]
 fn test_real_all() {
-    let (nodes, ways) = read("src/osm4routing/test_data/minimal.osm.pbf").unwrap();
+    let (nodes, ways) = read("src/osm4routing/test_data/minimal.osm.pbf", None).unwrap();
     assert_eq!(2, nodes.len());
     assert_eq!(1, ways.len());
 }
@@ -268,7 +280,7 @@ fn test_split() {
 
 #[test]
 fn test_wrong_file() {
-    let r = read("i hope you have no file name like this one");
+    let r = read("i hope you have no file name like this one", None);
     assert!(r.is_err());
 }
 
