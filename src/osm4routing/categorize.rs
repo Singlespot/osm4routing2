@@ -188,13 +188,13 @@ impl EdgeProperties {
                 }
                 "motorway" | "motorway_link" | "motorway_junction" => {
                     self.car_forward.allow(CarAccessibility::Motorway);
-                    self.foot.forbid();
-                    self.bike_forward.forbid();
+                    self.foot.soft_forbid();
+                    self.bike_forward.soft_forbid();
                 }
                 "trunk" | "trunk_link" => {
                     self.car_forward.allow(CarAccessibility::Trunk);
-                    self.foot.forbid();
-                    self.bike_forward.forbid();
+                    self.foot.soft_forbid();
+                    self.bike_forward.soft_forbid();
                 }
                 _ => {}
             },
