@@ -54,6 +54,7 @@ pub enum CarAccessibility {
     Primary,     // http://wiki.http://wiki.openstreetmap.org/wiki/Tag:highway%3Dprimary
     Trunk,       // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dtrunk
     Motorway,    // http://wiki.openstreetmap.org/wiki/Tag:highway%3Dmotorway
+    PublicTransit, // for taxis and bus only
     // @formatter:on
 }
 
@@ -200,10 +201,22 @@ impl EdgeProperties {
             },
             "motor_vehicle" => match val {
                 "no" => {
-                    self.car_forward.forbid();
+                    self.car_forward.soft_forbid();
                 }
                 _ => {}
             },
+            "taxi" => match val {
+                "yes" | "designated" | "permit" => {
+                    self.car_forward.force_allow(CarAccessibility::PublicTransit);
+                }
+                _ => {}
+            },
+            "bus" => match val {
+                "yes" | "designated" | "permit" => {
+                    self.car_forward.force_allow(CarAccessibility::PublicTransit);
+                }
+                _ => {}
+            }
             "pedestrian" | "foot" => match val {
                 "no" | "use_sidepath" => self.foot.forbid(),
                 "yes" | "designated" | "official" => self.foot.force_allow(FootAccessibility::Allowed),
@@ -262,6 +275,10 @@ impl EdgeProperties {
             "railway" => match val {
                 "abandoned" | "disused" | "razed" => {
                     self.train.forbid();
+                }
+                "platform" => {
+                    self.train.forbid();
+                    self.foot.allow(FootAccessibility::Allowed);
                 }
                 _ => {
                     self.train.allow(TrainAccessibility::Allowed);
