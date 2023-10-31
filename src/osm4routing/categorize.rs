@@ -164,7 +164,7 @@ impl EdgeProperties {
                     self.foot.allow(FootAccessibility::Allowed);
                 }
                 "path" | "footway" | "steps" | "pedestrian" => {
-                    self.bike_forward.allow(BikeAccessibility::Allowed);
+                    // self.bike_forward.allow(BikeAccessibility::Allowed);
                     self.foot.allow(FootAccessibility::Allowed);
                 }
                 "primary" | "primary_link" => {
