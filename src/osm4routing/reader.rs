@@ -214,10 +214,11 @@ pub fn read(filename: &str, required_kv: Option<Vec<(String, String)>>) -> Resul
     return if let Some(required_kv) = required_kv {
         Reader::new()
             .require_multiple(required_kv)
+            .reject("area", "yes")
             .read(filename)
     } else {
         Reader::new().read(filename)
-    }
+    };
 }
 
 #[test]
