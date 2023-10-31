@@ -215,6 +215,7 @@ pub fn read(filename: &str, required_kv: Option<Vec<(String, String)>>) -> Resul
         Reader::new()
             .require_multiple(required_kv)
             .reject("area", "yes")
+            .reject("highway", "elevator")
             .read(filename)
     } else {
         Reader::new().read(filename)
